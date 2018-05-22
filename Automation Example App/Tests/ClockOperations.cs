@@ -18,18 +18,19 @@ namespace Automation_Example_App.Tests
             double angle;
             double hourHand;
             double minuteHand;
-
+            
             if (hour == 12 || hour == 0) hourHand = 0;
             if (minute == 60 || minute == 0) minuteHand = 0;
-
-            hourHand = 0.5 * (hour * 60 + minute);
-            minuteHand = 6 * minute;
-
+            
+            hourHand = ((180.0 / Math.PI) * 0.5) * (60 * hour + minute);
+            minuteHand = ((180.0 / Math.PI) * 6.0) * minute;
+            
             angle = hourHand - minuteHand;
-
+            angle = Math.PI * angle / 180.0;
             angle = Math.Min(360 - angle, angle);
+            
+            return Math.Abs(angle); 
 
-            return angle;
         }
 
         /// <summary>
