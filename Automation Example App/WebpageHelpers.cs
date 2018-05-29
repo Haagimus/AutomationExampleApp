@@ -1,25 +1,29 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Automation_Example_App
 {
-    public static class WebpageHelpers
+    public class WebpageHelpers
     {
-        public static IWebDriver Driver { get; set; }
-
         // Open the calculator webpage and return the driver object so it can be referenced in the main form
-        public static IWebDriver OpenWebpage(string hyperlink)
+        public IWebDriver OpenWebpage(string hyperlink)
         {
-            Driver = new InternetExplorerDriver();
+            if(!File.Exists(Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe"))
+            {
+                File.Copy(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, "Resources\\IEDriverServer.exe"),
+                    Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe");
+            }
+
+            IWebDriver Driver = new InternetExplorerDriver();
             Driver.Navigate().GoToUrl(hyperlink);
             return Driver;
         }
 
-        // Close the driver console and webpage
-        public static void CloseWebpage(IWebDriver driver)
+        public void CloseDriver(IWebDriver driver)
         {
-            driver.Dispose();
+            driver.Quit();
         }
 
         /// <summary>
@@ -29,7 +33,7 @@ namespace Automation_Example_App
         /// <param name="searchClass">The class type that will be enumerated through</param>
         /// <param name="searchText">The text you want to search for in the enumerated classes</param>
         /// <returns>The web element that matches the search criteria or returns nothing.</returns>
-        public static IWebElement GetElementByClass(IWebDriver driver, string searchClass, string searchText)
+        public IWebElement GetElementByClass(IWebDriver driver, string searchClass, string searchText)
         {
             foreach (var item in driver.FindElements(By.ClassName(searchClass)))
             {
@@ -49,7 +53,7 @@ namespace Automation_Example_App
         /// <param name="searchId">The id name that will be enumerated through</param>
         /// <param name="searchText">The text you want to search for in the enumerated ids</param>
         /// <returns>The web element that matches the search criteria or returns nothing.</returns>
-        public static IWebElement GetElementByID(IWebDriver driver, string searchId, string searchText)
+        public IWebElement GetElementByID(IWebDriver driver, string searchId, string searchText)
         {
             foreach (var r in driver.FindElements(By.Id(searchId)))
             {
@@ -62,7 +66,7 @@ namespace Automation_Example_App
             return null;
         }
 
-        public static List<IWebElement> GetClockElelements(IWebDriver driver)
+        public List<IWebElement> GetClockElelements(IWebDriver driver)
         {
             var results = driver.FindElements(By.ClassName("tad-sortable-item"));
             List<IWebElement> clocks = new List<IWebElement>();

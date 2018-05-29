@@ -66,6 +66,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\ExternalMethods.cs" />
+    <Compile Include="Tests\UnitTests.cs" />
     <Compile Include="Tests\ClockOperations.cs" />
     <Compile Include="Tests\MathOperations.cs" />
     <Compile Include="WebpageHelpers.cs" />
@@ -106,6 +107,9 @@
     <EmbeddedResource Include="Resources\TimeZones.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -1,11 +1,13 @@
 ﻿using OpenQA.Selenium;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Automation_Example_App.Tests
 {
-    class ClockOperations
-    { 
+    public class ClockOperations
+    {
         /// <summary>
         /// Calculates the angle between hands on a clock, this is assuming no movement between minute and hour except
         /// for the tick that occurs every 60 seconds.
@@ -13,23 +15,31 @@ namespace Automation_Example_App.Tests
         /// <param name="hour">The hour of the clock</param>
         /// <param name="minute">The minute of the clock</param>
         /// <returns>The angle between the two hands</returns>
-        public static double ClockAngleCalc(int hour, int minute)
+        public double ClockAngleCalc(int hour, int minute)
         {
-            double angle;
-            double hourHand;
-            double minuteHand;
+            try
+            {
+                double angle;
+                double hourHand;
+                double minuteHand;
 
-            if (hour == 12 || hour == 0) hourHand = 0;
-            if (minute == 60 || minute == 0) minuteHand = 0;
+                if (hour == 12 || hour == 0) hourHand = 0;
+                if (minute == 60 || minute == 0) minuteHand = 0;
 
-            hourHand = 0.5 * (hour * 60 + minute);
-            minuteHand = 6 * minute;
+                hourHand = ((180.0 / Math.PI) * 0.5) * ((60 * hour) + minute);
+                minuteHand = ((180.0 / Math.PI) * 6.0 * minute);
 
-            angle = hourHand - minuteHand;
+                angle = hourHand - minuteHand;
+                angle = Math.PI * angle / 180.0;
+                angle = Math.Min(360 - angle, angle);
 
-            angle = Math.Min(360 - angle, angle);
-
-            return angle;
+                return Math.Round(Math.Abs(angle), 1);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Exception {ex}");
+                return 999.999;
+            }
         }
 
         /// <summary>
@@ -39,19 +49,21 @@ namespace Automation_Example_App.Tests
         /// <param name="strStart">The string immediately before the substring</param>
         /// <param name="strEnd">The string immediately after the substring</param>
         /// <returns>The desired substring</returns>
-        public static string getBetween(string strSource, string strStart, string strEnd)
+        public string getBetween(string strSource, string strStart, string strEnd)
         {
             int Start, End;
-            if (strSource.Contains(strStart) && strSource.Contains(strEnd))
+            try
             {
                 Start = strSource.IndexOf(strStart, 0) + strStart.Length;
                 End = strSource.IndexOf(strEnd, Start);
                 return strSource.Substring(Start, End - Start);
             }
-            else
+            catch (Exception ex)
             {
+                MessageBox.Show($"Exception {ex}");
                 return "";
             }
+
         }
 
         /// <summary>
@@ -60,12 +72,20 @@ namespace Automation_Example_App.Tests
         /// <param name="webClock">This is the in page clock that is checked against</param>
         /// <param name="clock">This is the clock object that will provide offset from UTC to check with</param>
         /// <returns>True or False</returns>
-        public static bool CheckClockTime(IWebElement webClock, Clock clock)
+        public bool CheckClockTime(IWebElement webClock, Clock clock)
         {
-            var hrMin = webClock.FindElement(By.ClassName("c-city__hrMin"));
-            var ampm = webClock.FindElement(By.ClassName("c-city__ampm"));
-            return (hrMin.GetAttribute("innerHTML") == String.Format("{0:h:mm}", DateTime.UtcNow.AddHours(clock._offset))
-            && ampm.GetAttribute("innerHTML") == String.Format("{0:tt}", DateTime.UtcNow.AddHours(clock._offset)).ToLower());
+            try
+            {
+                var hrMin = webClock.FindElement(By.ClassName("c-city__hrMin"));
+                var ampm = webClock.FindElement(By.ClassName("c-city__ampm"));
+                return (hrMin.GetAttribute("innerHTML") == String.Format("{0:h:mm}", DateTime.UtcNow.AddHours(clock._offset))
+                && ampm.GetAttribute("innerHTML") == String.Format("{0:tt}", DateTime.UtcNow.AddHours(clock._offset)).ToLower());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Exception {ex}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -74,17 +94,25 @@ namespace Automation_Example_App.Tests
         /// <param name="webClock">This is the in page clock that is checked</param>
         /// <param name="hand">This is the class name of the hand you want checked</param>
         /// <returns>True or False</returns>
-        public static bool CheckHandMovement(IWebElement webClock, string hand)
+        public bool CheckHandMovement(IWebElement webClock, string hand)
         {
-            string firstAngle, lastAngle;
-            // Capture the translation of the minute hand
-            firstAngle = webClock.FindElement(By.ClassName(hand)).GetCssValue("transform");
+            try
+            {
+                string firstAngle, lastAngle;
+                // Capture the translation of the minute hand
+                firstAngle = webClock.FindElement(By.ClassName(hand)).GetCssValue("transform");
 
-            // Wait five seconds then capture the translation of the minute hand again
-            Thread.Sleep(5000);
-            lastAngle = webClock.FindElement(By.ClassName(hand)).GetCssValue("transform");
+                // Wait five seconds then capture the translation of the minute hand again
+                Thread.Sleep(5000);
+                lastAngle = webClock.FindElement(By.ClassName(hand)).GetCssValue("transform");
 
-            return firstAngle != lastAngle;
+                return firstAngle != lastAngle;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Exception {ex}");
+                return false;
+            }
         }
     }
 }

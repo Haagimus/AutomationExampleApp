@@ -1,6 +1,6 @@
 ﻿namespace Automation_Example_App
 {
-    class Clock
+    public class Clock
     {
         public string _clockZone { get; set; }
         public string _location { get; set; }

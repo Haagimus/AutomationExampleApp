@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Automation_Example_App.Resources
 {
-    class User32
+    public static class User32
     {
         [StructLayout(LayoutKind.Sequential)]
         public struct Rect
@@ -16,5 +16,8 @@ namespace Automation_Example_App.Resources
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetWindowRect(IntPtr hWnd, ref Rect rect);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }
