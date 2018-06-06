@@ -26,12 +26,15 @@ namespace Automation_Example_App
         private readonly List<string> calcElements = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "–", "×", "/", "=", "C", "0" };
         private readonly List<string> calcNames = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "plus", "minus", "times", "divide", "equals", "clear", "result" };
         private readonly SynchronizationContext synchronizationContext;
-        private readonly int testCount = 2;
-        private delegate void UpdateUIDelegate(Control formObject, string text);
+        private readonly int testCount = 10;
+        private delegate void UpdateUILabelDelegate(Control formObject, string text);
+        private delegate void UpdateUIButtonDelegate(Control formObject, bool enabled);
 
         public static WebpageHelpers _WebHelper = new WebpageHelpers();
         public static MathOperations _MathOperations = new MathOperations();
         public static ClockOperations _ClockOperations = new ClockOperations();
+
+
 
         public Form1()
         {
@@ -48,7 +51,7 @@ namespace Automation_Example_App
             }
             else
             {
-                UpdateUIDelegate updateUI = new UpdateUIDelegate(UpdateUI);
+                UpdateUILabelDelegate updateUI = new UpdateUILabelDelegate(UpdateUI);
                 BeginInvoke(updateUI, new object[] { formObject, text });
             }
         }
@@ -62,7 +65,7 @@ namespace Automation_Example_App
             }
             else
             {
-                UpdateUIDelegate updateUI = new UpdateUIDelegate(UpdateUI);
+                UpdateUIButtonDelegate updateUI = new UpdateUIButtonDelegate(UpdateUI);
                 BeginInvoke(updateUI, new object[] { formObject, enabled });
             }
         }
@@ -127,11 +130,11 @@ namespace Automation_Example_App
                 kvpElements.Add(calcNames[i], calcPageElements[i]);
             }
 
-            //ExecuteAdditionTests();
-            //ExecuteMultiplyTests();
-            //ExecuteDivideTests();
-            //ExecuteSubtractTests();
-            //ExecuteRandomTests();
+            ExecuteAdditionTests();
+            ExecuteMultiplyTests();
+            ExecuteDivideTests();
+            ExecuteSubtractTests();
+            ExecuteRandomTests();
             TakeScreenshot(1);
             calcDriver.Dispose();
             UpdateUI(LblStatus, "Calculator tests complete. Driver closed.");
@@ -307,38 +310,19 @@ namespace Automation_Example_App
                         break;
                     case 3:
                         // We need to account for the possible outcomes of division where it may not just be a simple positive or negative number
-                        if (r1 == 0 && r2 == 0)
-                        {
-                            UpdateUI(LblRandomTest, $"Random Test: Checking {r1} / {r2}");
-                            // This is when 0 is divided by 0, we know it will throw an error so we send -1 and handle it in the function
-                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), -1));
-                        }
-                        else if (r1 == 0 && r2 > 0)
-                        {
-                            UpdateUI(LblRandomTest, $"Random Test: Checking {r1} / {r2}");
-                            // This is when we are dividing 0 by any number which will return a 0
-                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), 0));
-                        }
-                        else if (r1 > 0 && r2 == 0)
-                        {
-                            UpdateUI(LblRandomTest, $"Random Test: Checking {r1} / {r2 + 1}");
-                            // This is when we are dividing any number by 0, we just add 1 to 0 so we can perform the function
-                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), r1 / (r2 + 1)));
-                        }
-                        else if (r2 > r1)
+                        try
                         {
                             UpdateUI(LblRandomTest, $"Random Test: Checking {r1} / {r2}");
                             // This is when a decimal will be returned, the calculator will only display out to three decimal places so we format
                             // the string .net calculates because it has far more accuracy
-                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), Math.Round(Double.Parse(string.Format("{0:N3}", (double)r1 / r2)))));
+                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), Double.Parse(string.Format("{0:N3}", (double)r1 / r2))));
+                            break;
                         }
-                        else
+                        catch (DivideByZeroException)
                         {
-                            UpdateUI(LblRandomTest, $"Random Test: Checking {r1} / {r2}");
-                            // This is when it's a straight forward division problem where the divisor is smaller than the number to be divided
-                            results.Add(_MathOperations.Division(kvpElements, r1.ToString(), r2.ToString(), r1 / r2));
+                            results.Add(false);
+                            break;
                         }
-                        break;
                     case 4:
                         UpdateUI(LblRandomTest, $"Random Test: Checking {r1} - {r2}");
                         // Run the function and add the result to the results list
@@ -463,7 +447,9 @@ namespace Automation_Example_App
             var driver = testNum == 1 ? calcDriver : clockDriver;
             // Find the window that we are running the calculator in
 
-            var savePath = testNum == 1 ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Calculator Test.png" : Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Clock Test.png";
+            var savePath = testNum == 1
+                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Calculator Test.png"
+                : Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Clock Test.png";
 
             Screenshot _ss = driver.GetScreenshot();
             _ss.SaveAsFile(savePath, ScreenshotImageFormat.Png);
@@ -471,11 +457,11 @@ namespace Automation_Example_App
             if (testNum == 1)
             {
                 // Save the bitmap as a png file to the users desktop
-                UpdateUI(LblStatus, "Calculator Testing Complete");
+                UpdateUI(LblStatus, "Calculator Testing Complete. Capturing Screenshot.");
             }
             else
             {
-                UpdateUI(LblStatus, "Clock Testing Complete");
+                UpdateUI(LblStatus, "Clock Testing Complete. Capturing Screenshot.");
             }
         }
 
