@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Drawing;
 using Automation_Example_App.Resources;
 using System.Text.RegularExpressions;
+using OpenQA.Selenium.IE;
 
 namespace Automation_Example_App
 {
@@ -20,13 +21,13 @@ namespace Automation_Example_App
         private readonly Dictionary<string, IWebElement> kvpElements = new Dictionary<string, IWebElement>();
         private readonly List<Clock> clocks = new List<Clock>();
         private readonly List<IWebElement> clockDisplays = new List<IWebElement>();
-        private IWebDriver calcDriver, clockDriver;
+        private InternetExplorerDriver calcDriver, clockDriver;
         private readonly List<bool> results = new List<bool>();
         private readonly List<string> calcElements = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "–", "×", "/", "=", "C", "0" };
         private readonly List<string> calcNames = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "plus", "minus", "times", "divide", "equals", "clear", "result" };
         private readonly SynchronizationContext synchronizationContext;
         private readonly int testCount = 2;
-        delegate void UpdateUIDelegate(Control formObject, string text);
+        private delegate void UpdateUIDelegate(Control formObject, string text);
 
         public static WebpageHelpers _WebHelper = new WebpageHelpers();
         public static MathOperations _MathOperations = new MathOperations();
@@ -40,7 +41,7 @@ namespace Automation_Example_App
 
         private void UpdateUI(Control formObject, string text)
         {
-            if (formObject.InvokeRequired == false)
+            if (!formObject.InvokeRequired)
             {
                 formObject.Text = text;
                 formObject.Refresh();
@@ -52,15 +53,26 @@ namespace Automation_Example_App
             }
         }
 
+        private void UpdateUI(Control formObject, bool enabled)
+        {
+            if (!formObject.InvokeRequired)
+            {
+                formObject.Enabled = enabled;
+                formObject.Refresh();
+            }
+            else
+            {
+                UpdateUIDelegate updateUI = new UpdateUIDelegate(UpdateUI);
+                BeginInvoke(updateUI, new object[] { formObject, enabled });
+            }
+        }
+
         private async void BtnOpenCalculator_Click(object sender, EventArgs e)
         {
             UpdateUI(LblStatus, "Opening Calculator Webpage.");
-            btnOpenCalculator.Enabled = false;
-            BtnOpenClocks.Enabled = false;
-            await Task.Run(() =>
-            {
-                calcDriver = _WebHelper.OpenWebpage("http://www.calculator.net");
-            });
+            UpdateUI(btnOpenCalculator, false);
+            UpdateUI(BtnOpenClocks, false);
+            await Task.Run(() => calcDriver = _WebHelper.OpenWebpage("http://www.calculator.net")).ConfigureAwait(false);
             UpdateUI(LblStatus, "");
 
             StartCalculatorTests();
@@ -69,12 +81,9 @@ namespace Automation_Example_App
         private async void BtnOpenClocks_Click(object sender, EventArgs e)
         {
             UpdateUI(LblStatus, "Opening Clock webpage.");
-            btnOpenCalculator.Enabled = false;
-            BtnOpenClocks.Enabled = false;
-            await Task.Run(() =>
-            {
-                clockDriver = _WebHelper.OpenWebpage("https://www.timeanddate.com/worldclock/personal.html");
-            });
+            UpdateUI(btnOpenCalculator, false);
+            UpdateUI(BtnOpenClocks, false);
+            await Task.Run(() => clockDriver = _WebHelper.OpenWebpage("https://www.timeanddate.com/worldclock/personal.html")).ConfigureAwait(false);
             UpdateUI(LblStatus, "");
 
             StartClockTests();
@@ -118,17 +127,17 @@ namespace Automation_Example_App
                 kvpElements.Add(calcNames[i], calcPageElements[i]);
             }
 
-            ExecuteAdditionTests();
-            ExecuteMultiplyTests();
-            ExecuteDivideTests();
-            ExecuteSubtractTests();
-            ExecuteRandomTests();
+            //ExecuteAdditionTests();
+            //ExecuteMultiplyTests();
+            //ExecuteDivideTests();
+            //ExecuteSubtractTests();
+            //ExecuteRandomTests();
             TakeScreenshot(1);
             calcDriver.Dispose();
             UpdateUI(LblStatus, "Calculator tests complete. Driver closed.");
 
-            btnOpenCalculator.Enabled = true;
-            BtnOpenClocks.Enabled = true;
+            UpdateUI(btnOpenCalculator, true);
+            UpdateUI(BtnOpenClocks, true);
         }
 
         private void StartClockTests()
@@ -159,8 +168,8 @@ namespace Automation_Example_App
                 {
                     // We now need to create the new clock objects so we can reference them later
                     // We are going to add the timezone and reference locations for each created item
-                    clocks.Add(new Clock(_ClockOperations.getBetween(clockZone, "title=\\\"", "\\\">").ToString(),
-                        _ClockOperations.getBetween(location, "name\":\"", "\",\"co").ToString()));
+                    clocks.Add(new Clock(_ClockOperations.getBetween(clockZone, "title=\\\"", "\\\">"),
+                        _ClockOperations.getBetween(location, "name\":\"", "\",\"co")));
 
                     clockZone = clockZone.Substring(clockZone.IndexOf(clocks[i]._clockZone + "\\\">"));
                     location = location.Substring(location.IndexOf(clocks[i]._location + "\",\"co"));
@@ -176,8 +185,8 @@ namespace Automation_Example_App
             _WebHelper.CloseDriver(calcDriver);
             UpdateUI(LblStatus, "Clock tests complete. Driver closed.");
 
-            btnOpenCalculator.Enabled = true;
-            BtnOpenClocks.Enabled = true;
+            UpdateUI(btnOpenCalculator, true);
+            UpdateUI(BtnOpenClocks, true);
         }
 
         /// <summary>
@@ -366,7 +375,6 @@ namespace Automation_Example_App
                             clock._offset = line.Substring(line.LastIndexOf('\t') + 1, 1)
                                 == "−" ? -1 * double.Parse(line.Substring(start, len)) : double.Parse(line.Substring(start, len));
                         }
-
                     }
                 }
 
@@ -382,7 +390,6 @@ namespace Automation_Example_App
                     }
                 }
             }
-
 
             // Verify each result is true and return passed or failed
             UpdateUI(LblTimeTest, results.TrueForAll(b => b) ? "Time Test: Passed" : "Time Test: Failed");
@@ -450,39 +457,24 @@ namespace Automation_Example_App
         /// <summary>
         /// Take a screenshot of the page.
         /// </summary>
+        /// <param name="testNum">1 is for calculator 2 is for clocks</param>
         private void TakeScreenshot(int testNum)
         {
             var driver = testNum == 1 ? calcDriver : clockDriver;
             // Find the window that we are running the calculator in
-            var proc = Array.Find(Process.GetProcesses(), x => x.MainWindowTitle == driver.Title + " - Internet Explorer");
-            User32.SetForegroundWindow(proc.MainWindowHandle);
-            Thread.Sleep(100);
-            var rect = new User32.Rect();
-            User32.GetWindowRect(proc.MainWindowHandle, ref rect);
 
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
+            var savePath = testNum == 1 ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Calculator Test.png" : Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Clock Test.png";
 
-            // Create a new bitmap with the matching dimensions of our window
-            var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            Graphics graphics = Graphics.FromImage(bmp);
-            // Copy the internet explorer pixels onto the bitmap we just created
-            graphics.CopyFromScreen(rect.left, rect.top, 0, 0, new Size(width, height), CopyPixelOperation.SourceCopy);
+            Screenshot _ss = driver.GetScreenshot();
+            _ss.SaveAsFile(savePath, ScreenshotImageFormat.Png);
 
             if (testNum == 1)
             {
                 // Save the bitmap as a png file to the users desktop
-                bmp.Save(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Calculator Test.png", ImageFormat.Png);
-                UpdateUI(LblScreenshotTest1, $"Screenshot Test:\r\n{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\Calculator Test.png");
-                Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Calculator Test.png");
                 UpdateUI(LblStatus, "Calculator Testing Complete");
             }
             else
             {
-                // Save the bitmap as a png file to the users desktop
-                bmp.Save(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Clock Test.png", ImageFormat.Png);
-                UpdateUI(LblScreenshotTest2, $"Screenshot Test:\r\n{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\Clock Test.png");
-                Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Clock Test.png");
                 UpdateUI(LblStatus, "Clock Testing Complete");
             }
         }

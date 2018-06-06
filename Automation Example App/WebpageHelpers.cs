@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
+using OpenQA.Selenium.Remote;
 using System.Collections.Generic;
 using System.IO;
 
@@ -8,7 +9,7 @@ namespace Automation_Example_App
     public class WebpageHelpers
     {
         // Open the calculator webpage and return the driver object so it can be referenced in the main form
-        public IWebDriver OpenWebpage(string hyperlink)
+        public InternetExplorerDriver OpenWebpage(string hyperlink)
         {
             if(!File.Exists(Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe"))
             {
@@ -16,12 +17,17 @@ namespace Automation_Example_App
                     Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe");
             }
 
-            IWebDriver Driver = new InternetExplorerDriver();
+            InternetExplorerOptions options = new InternetExplorerOptions
+            {
+                IgnoreZoomLevel = true
+            };
+            var Driver = new InternetExplorerDriver(options);
+            Driver.Manage().Window.Size = new System.Drawing.Size(800, 600);
             Driver.Navigate().GoToUrl(hyperlink);
             return Driver;
         }
 
-        public void CloseDriver(IWebDriver driver)
+        public void CloseDriver(InternetExplorerDriver driver)
         {
             driver.Quit();
         }
