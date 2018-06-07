@@ -1,8 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
-using OpenQA.Selenium.Remote;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Automation_Example_App

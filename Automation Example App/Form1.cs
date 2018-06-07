@@ -51,7 +51,6 @@ namespace Automation_Example_App
         {
             UpdateUI(btnOpenCalculator, true);
             UpdateUI(BtnOpenClocks, true);
-            UpdateUI(LblStatus, "");
         }
 
         private void UpdateUI(Control formObject, bool enabled)
@@ -127,37 +126,24 @@ namespace Automation_Example_App
             // Find all the buttons with the class 'scinm' which are the number buttons
             for (var i = 0; i < 10; i++)
             {
-                do
-                {
-                    IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scinm", calcElements[i]);
-                    calcPageElements.Add(btn);
-                }
-                while (calcPageElements[i] != null);
+                IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scinm", calcElements[i]);
+                calcPageElements.Add(btn);
             }
 
             UpdateUI(LblStatus, "Finding operations buttons.");
             // Find all the buttons with the class 'sciop' which are the operation buttons
             for (var i = 10; i < 14; i++)
             {
-                do
-                {
-                    IWebElement operation = _WebHelper.GetElementByClass(calcDriver, "sciop", calcElements[i]);
-                    calcPageElements.Add(operation);
-                }
-                while (calcPageElements[i] != null);
+                IWebElement operation = _WebHelper.GetElementByClass(calcDriver, "sciop", calcElements[i]);
+                calcPageElements.Add(operation);
             }
 
             UpdateUI(LblStatus, "Finding equal and clear buttons.");
             // Find the two buttons with the class 'scieq' which are the equal and clear buttons
             for (var i = 14; i < 16; i++)
             {
-                do
-                {
-                    IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scieq", calcElements[i]);
+                IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scieq", calcElements[i]);
                     calcPageElements.Add(btn);
-                }
-                while (calcPageElements[i] != null);
-
             }
 
             UpdateUI(LblStatus, "Finding output window.");
@@ -281,7 +267,7 @@ namespace Automation_Example_App
             results.Clear();
 
             // We know 0/0 will return an error so we pass an expected result of -1 to handle it in the function
-            results.Add(_MathOperations.Division(kvpElements, "0", "0", -1));
+            //results.Add(_MathOperations.Division(kvpElements, "0", "0", -1));
 
             // Loop 0 through 10 and run the divide function for each number
             for (int i = 1; i < testCount; i++)
@@ -290,7 +276,7 @@ namespace Automation_Example_App
 
                 UpdateUI(LblDivisionTest, $"Division Test: Checking {i} / {i}");
                 // Run the function and add the result to the results list
-                results.Add(_MathOperations.Division(kvpElements, i.ToString(), i.ToString(), 1));
+                results.Add(_MathOperations.Division(kvpElements, i.ToString(), i.ToString(), i / i));
             }
 
             // Verify each result is true and return passed or failed
@@ -311,7 +297,7 @@ namespace Automation_Example_App
 
                 UpdateUI(LblSubtractionTest, $"Subtraction Test: Checking {i} - {i}");
                 // Run the function and add the result to the results list
-                results.Add(_MathOperations.Subtraction(kvpElements, i.ToString(), i.ToString(), 0));
+                results.Add(_MathOperations.Subtraction(kvpElements, i.ToString(), i.ToString(), i - i));
             }
 
             // Verify each result is true and return passed or failed
@@ -326,7 +312,7 @@ namespace Automation_Example_App
             Random r = new Random();
             results.Clear();
 
-            UpdateUI(LblStatus, "Executing Subtraction Tests.");
+            UpdateUI(LblStatus, "Executing Random Tests.");
             // Now we will run ten random math tests and verify the results
             for (int i = 0; i < testCount; i++)
             {

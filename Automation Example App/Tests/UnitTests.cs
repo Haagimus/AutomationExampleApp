@@ -1,12 +1,15 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
+using System.Collections.Generic;
 
 namespace Automation_Example_App.Tests
 {
     [TestClass]
     public class UnitTests
     {
+        private readonly MathOperations _MathOperations = new MathOperations();
+
         [TestMethod]
         public void OpenIEBrowser()
         {
