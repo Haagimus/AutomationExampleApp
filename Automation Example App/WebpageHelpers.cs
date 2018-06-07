@@ -1,6 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.IE;
 using OpenQA.Selenium.Remote;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -11,7 +12,7 @@ namespace Automation_Example_App
         // Open the calculator webpage and return the driver object so it can be referenced in the main form
         public InternetExplorerDriver OpenWebpage(string hyperlink)
         {
-            if(!File.Exists(Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe"))
+            if (!File.Exists(Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe"))
             {
                 File.Copy(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, "Resources\\IEDriverServer.exe"),
                     Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\debug\\IEDriverServer.exe");
@@ -21,15 +22,21 @@ namespace Automation_Example_App
             {
                 IgnoreZoomLevel = true
             };
-            var Driver = new InternetExplorerDriver(options);
-            Driver.Manage().Window.Size = new System.Drawing.Size(800, 600);
-            Driver.Navigate().GoToUrl(hyperlink);
-            return Driver;
-        }
+            InternetExplorerDriver Driver = new InternetExplorerDriver(options);
 
-        public void CloseDriver(InternetExplorerDriver driver)
-        {
-            driver.Quit();
+            try
+            {
+                Driver.Manage().Window.Size = new System.Drawing.Size(800, 600);
+                Driver.Navigate().GoToUrl(hyperlink);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                Driver.Quit();
+                Driver = null;
+            }
+
+            return Driver;
         }
 
         /// <summary>
@@ -41,15 +48,17 @@ namespace Automation_Example_App
         /// <returns>The web element that matches the search criteria or returns nothing.</returns>
         public IWebElement GetElementByClass(IWebDriver driver, string searchClass, string searchText)
         {
+            IWebElement result = null;
+
             foreach (var item in driver.FindElements(By.ClassName(searchClass)))
             {
                 if (item.Text == searchText)
                 {
-                    return item;
+                    result = item;
                 }
             }
 
-            return null;
+            return result;
         }
 
         /// <summary>
@@ -61,31 +70,17 @@ namespace Automation_Example_App
         /// <returns>The web element that matches the search criteria or returns nothing.</returns>
         public IWebElement GetElementByID(IWebDriver driver, string searchId, string searchText)
         {
-            foreach (var r in driver.FindElements(By.Id(searchId)))
+            IWebElement result = null;
+
+            foreach (var item in driver.FindElements(By.Id(searchId)))
             {
-                if (r.Text == searchText)
+                if (item.Text == searchText)
                 {
-                    return r;
+                    result = item;
                 }
             }
 
-            return null;
-        }
-
-        public List<IWebElement> GetClockElelements(IWebDriver driver)
-        {
-            var results = driver.FindElements(By.ClassName("tad-sortable-item"));
-            List<IWebElement> clocks = new List<IWebElement>();
-
-            foreach (var r in results)
-            {
-                if (r.Text != "")
-                {
-                    clocks.Add(r);
-                }
-            }
-
-            return clocks;
+            return result;
         }
     }
 }

@@ -1,11 +1,23 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OpenQA.Selenium;
+using OpenQA.Selenium.IE;
 
 namespace Automation_Example_App.Tests
 {
     [TestClass]
     public class UnitTests
     {
+        [TestMethod]
+        public void OpenIEBrowser()
+        {
+            // This is just a test method to launch the browser so we can setup security settings
+            IWebDriver driver = new InternetExplorerDriver();
+
+            driver.Navigate().GoToUrl("http://www.google.com");
+        }
+
         private readonly ClockOperations _cOps = new ClockOperations();
+
         [TestMethod]
         public void WholeHourTest()
         {

@@ -1,15 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using OpenQA.Selenium;
 using Automation_Example_App.Tests;
-using System.Drawing.Imaging;
-using System.Diagnostics;
-using System.Drawing;
-using Automation_Example_App.Resources;
 using System.Text.RegularExpressions;
 using OpenQA.Selenium.IE;
 
@@ -25,7 +20,6 @@ namespace Automation_Example_App
         private readonly List<bool> results = new List<bool>();
         private readonly List<string> calcElements = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "–", "×", "/", "=", "C", "0" };
         private readonly List<string> calcNames = new List<string> { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "plus", "minus", "times", "divide", "equals", "clear", "result" };
-        private readonly SynchronizationContext synchronizationContext;
         private readonly int testCount = 10;
         private delegate void UpdateUILabelDelegate(Control formObject, string text);
         private delegate void UpdateUIButtonDelegate(Control formObject, bool enabled);
@@ -34,12 +28,9 @@ namespace Automation_Example_App
         public static MathOperations _MathOperations = new MathOperations();
         public static ClockOperations _ClockOperations = new ClockOperations();
 
-
-
         public Form1()
         {
             InitializeComponent();
-            synchronizationContext = SynchronizationContext.Current;
         }
 
         private void UpdateUI(Control formObject, string text)
@@ -54,6 +45,13 @@ namespace Automation_Example_App
                 UpdateUILabelDelegate updateUI = new UpdateUILabelDelegate(UpdateUI);
                 BeginInvoke(updateUI, new object[] { formObject, text });
             }
+        }
+
+        private void ResetUI()
+        {
+            UpdateUI(btnOpenCalculator, true);
+            UpdateUI(BtnOpenClocks, true);
+            UpdateUI(LblStatus, "");
         }
 
         private void UpdateUI(Control formObject, bool enabled)
@@ -75,10 +73,25 @@ namespace Automation_Example_App
             UpdateUI(LblStatus, "Opening Calculator Webpage.");
             UpdateUI(btnOpenCalculator, false);
             UpdateUI(BtnOpenClocks, false);
-            await Task.Run(() => calcDriver = _WebHelper.OpenWebpage("http://www.calculator.net")).ConfigureAwait(false);
-            UpdateUI(LblStatus, "");
 
-            StartCalculatorTests();
+            try
+            {
+                await Task.Run(() => calcDriver = _WebHelper.OpenWebpage("http://www.calculator.net")).ConfigureAwait(false);
+                UpdateUI(LblStatus, "");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            if (calcDriver != null)
+            {
+                StartCalculatorTests();
+            }
+            else
+            {
+                ResetUI();
+            }
         }
 
         private async void BtnOpenClocks_Click(object sender, EventArgs e)
@@ -86,10 +99,25 @@ namespace Automation_Example_App
             UpdateUI(LblStatus, "Opening Clock webpage.");
             UpdateUI(btnOpenCalculator, false);
             UpdateUI(BtnOpenClocks, false);
-            await Task.Run(() => clockDriver = _WebHelper.OpenWebpage("https://www.timeanddate.com/worldclock/personal.html")).ConfigureAwait(false);
-            UpdateUI(LblStatus, "");
 
-            StartClockTests();
+            try
+            {
+                await Task.Run(() => clockDriver = _WebHelper.OpenWebpage("https://www.timeanddate.com/worldclock/personal.html")).ConfigureAwait(false);
+                UpdateUI(LblStatus, "");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            if (clockDriver != null)
+            {
+                StartClockTests();
+            }
+            else
+            {
+                ResetUI();
+            }
         }
 
         private void StartCalculatorTests()
@@ -99,24 +127,37 @@ namespace Automation_Example_App
             // Find all the buttons with the class 'scinm' which are the number buttons
             for (var i = 0; i < 10; i++)
             {
-                IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scinm", calcElements[i]);
-                calcPageElements.Add(btn);
+                do
+                {
+                    IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scinm", calcElements[i]);
+                    calcPageElements.Add(btn);
+                }
+                while (calcPageElements[i] != null);
             }
 
             UpdateUI(LblStatus, "Finding operations buttons.");
             // Find all the buttons with the class 'sciop' which are the operation buttons
             for (var i = 10; i < 14; i++)
             {
-                IWebElement operation = _WebHelper.GetElementByClass(calcDriver, "sciop", calcElements[i]);
-                calcPageElements.Add(operation);
+                do
+                {
+                    IWebElement operation = _WebHelper.GetElementByClass(calcDriver, "sciop", calcElements[i]);
+                    calcPageElements.Add(operation);
+                }
+                while (calcPageElements[i] != null);
             }
 
             UpdateUI(LblStatus, "Finding equal and clear buttons.");
             // Find the two buttons with the class 'scieq' which are the equal and clear buttons
             for (var i = 14; i < 16; i++)
             {
-                IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scieq", calcElements[i]);
-                calcPageElements.Add(btn);
+                do
+                {
+                    IWebElement btn = _WebHelper.GetElementByClass(calcDriver, "scieq", calcElements[i]);
+                    calcPageElements.Add(btn);
+                }
+                while (calcPageElements[i] != null);
+
             }
 
             UpdateUI(LblStatus, "Finding output window.");
@@ -136,11 +177,10 @@ namespace Automation_Example_App
             ExecuteSubtractTests();
             ExecuteRandomTests();
             TakeScreenshot(1);
-            calcDriver.Dispose();
+            calcDriver.Quit();
             UpdateUI(LblStatus, "Calculator tests complete. Driver closed.");
 
-            UpdateUI(btnOpenCalculator, true);
-            UpdateUI(BtnOpenClocks, true);
+            ResetUI();
         }
 
         private void StartClockTests()
@@ -185,11 +225,10 @@ namespace Automation_Example_App
             VerifyHourHands();
             VerifyClockAngles();
             TakeScreenshot(2);
-            _WebHelper.CloseDriver(calcDriver);
+            calcDriver.Quit();
             UpdateUI(LblStatus, "Clock tests complete. Driver closed.");
 
-            UpdateUI(btnOpenCalculator, true);
-            UpdateUI(BtnOpenClocks, true);
+            ResetUI();
         }
 
         /// <summary>

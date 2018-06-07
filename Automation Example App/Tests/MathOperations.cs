@@ -35,7 +35,7 @@ namespace Automation_Example_App.Tests
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Exception {ex}");
+                Console.WriteLine(ex);
                 return false;
             }
         }
@@ -65,7 +65,7 @@ namespace Automation_Example_App.Tests
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Exception {ex}");
+                Console.WriteLine(ex);
                 return false;
             }
         }
@@ -102,7 +102,7 @@ namespace Automation_Example_App.Tests
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Exception {ex}");
+                Console.WriteLine(ex);
                 return false;
             }
         }
@@ -132,7 +132,7 @@ namespace Automation_Example_App.Tests
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Exception {ex}");
+                Console.WriteLine(ex);
                 return false;
             }
         }
